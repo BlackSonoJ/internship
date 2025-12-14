@@ -1,10 +1,10 @@
 server:
-  port: 8000
+  port: 8080
 spring:
   application:
     name: notification-service
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP-SERVERS:kafka:9092}
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -17,8 +17,8 @@ spring:
     host: smtp.yandex.ru
     port: 465
     protocol: smtp
-    username: BlackSon.1@yandex.ru
-    password:
+    username: ${MAIL_USERNAME:BlackSon.1@yandex.ru}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -26,3 +26,10 @@ spring:
           ssl:
             enable: true
             trust: smtp.yandex.ru
+  cloud:
+    consul:
+      host: consul
+      port: 8500
+      discovery:
+        enabled: true
+        register: true
