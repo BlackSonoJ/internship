@@ -1,6 +1,6 @@
 FROM gradle:8-jdk21 AS build
 LABEL authors="vladimirligatiuk"
-WORKDIR /api-gateway
+WORKDIR /config-server
 
 COPY gradle gradle
 COPY gradlew .
@@ -13,8 +13,8 @@ RUN chmod +x ./gradlew
 RUN ./gradlew clean build -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
-WORKDIR /api-gateway
-COPY --from=build /api-gateway/build/libs/*.jar api-gateway.jar
+WORKDIR /config-server
+COPY --from=build /config-server/build/libs/*.jar config-server.jar
 
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "api-gateway.jar"]
+EXPOSE 8888
+ENTRYPOINT ["java", "-jar", "config-server.jar"]

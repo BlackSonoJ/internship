@@ -27,7 +27,7 @@ repositories {
 
 ext {
     set('snippetsDir', file("build/generated-snippets"))
-    set('springCloudVersion', "2025.1.0")
+    set('springCloudVersion', "2025.0.1")
 }
 
 
@@ -44,6 +44,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
     implementation 'org.springframework.cloud:spring-cloud-starter-consul-discovery'
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
     implementation 'org.liquibase:liquibase-core'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.kafka:spring-kafka'
