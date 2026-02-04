@@ -1,0 +1,5 @@
+rootProject.name = 'intern'
+
+includeBuild('api-gateway')
+includeBuild('user-service')
+includeBuild('notification-service')

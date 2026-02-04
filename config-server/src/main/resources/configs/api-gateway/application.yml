@@ -1,0 +1,56 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    consul:
+      host: consul
+      port: 8500
+      discovery:
+        enabled: true
+        register: true
+  gateway:
+    routes:
+      - id: user-service
+        uri: lb://user-service
+        predicates:
+        - Path=/api/v1/users/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: userServiceCircuitBreaker
+              fallbackUri: forward:/fallback/user
+      - id: notification-service
+        uri: lb://notification-service
+        predicates:
+          - Path=/api/v1/notification/**
+        filters:
+          - name: CircuitBreaker
+            args:
+              name: notificationServiceCircuitBreaker
+              fallbackUri: forward:/fallback/notification
+  discovery:
+    locator:
+      enabled: true
+      lower-case-service-id: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      notificationServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+
+

@@ -1,0 +1,102 @@
+services:
+  postgres-user-service-db:
+    container_name: user-service-db
+    image: postgres:16
+    environment:
+        POSTGRES_DB: user_service
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: admin
+    ports:
+      - "5431:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  kafka:
+    container_name: kafka
+    image: apache/kafka:3.7.1
+    environment:
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: "1"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+
+  consul:
+    image: hashicorp/consul:1.17
+    container_name: consul
+    command: agent -server -ui -node=consul -bootstrap-expect=1 -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+
+  config-server:
+    container_name: config-server
+    build: config-server/.
+    ports:
+      - "8888:8888"
+    depends_on:
+      consul:
+        condition: service_started
+
+
+  user-service:
+    container_name: user-service
+    build: user-service/.
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user-service-db:5432/user_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres-user-service-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      consul:
+        condition: service_started
+      config-server:
+        condition: service_started
+
+  notification-service:
+    container_name: notification-service
+    build: notification-service/.
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MAIL_USERNAME: BlackSon.1@yandex.ru
+      MAIL_PASSWORD: wsmhtdplfquyzmaz
+    depends_on:
+      kafka:
+        condition: service_started
+      consul:
+        condition: service_started
+      config-server:
+        condition: service_started
+    ports:
+      - "8082:8080"
+
+  api-gateway:
+    container_name: api-gateway
+    build: api-gateway/.
+    environment:
+      USER_SERVICE_URL: http://user-service:8080
+      NOTIFICATION_SERVICE_URL: http://notification-service:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      user-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      config-server:
+        condition: service_started
